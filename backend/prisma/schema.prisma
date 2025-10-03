@@ -1,0 +1,200 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model user {
+  id                   String               @id @default(uuid())
+  name                 String?
+  email                String               @unique
+  password             String
+  createdAt            DateTime             @default(now())
+  profiles             Profile[]
+  posts                Post[]
+  comments             Comment[]
+  emergencyContacts    EmergencyContact[]
+  alerts               Alert[]
+  notificationSettings NotificationSetting?
+
+  @@map("users")
+}
+
+model Profile {
+  id          String       @id @default(uuid())
+  user        user         @relation(fields: [userId], references: [id])
+  userId      String
+  displayName String
+  dob         DateTime?
+  notes       String?
+  medications Medication[]
+  doseLogs    DoseLog[]
+  alerts      Alert[]
+  createdAt   DateTime     @default(now())
+
+  @@map("profiles")
+}
+
+model Medication {
+  id              String        @id @default(uuid())
+  profile         Profile       @relation(fields: [profileId], references: [id])
+  profileId       String
+  name            String
+  brand           String?
+  strength        String? // e.g., "500 mg"
+  quantity        Int? // current quantity
+  refillThreshold Int? // when to remind refill
+  instructions    String? // free text
+  createdAt       DateTime      @default(now())
+  schedules       MedSchedule[]
+  reminders       Reminder[]
+  doseLogs        DoseLog[]
+
+  @@map("medications")
+}
+
+model MedSchedule {
+  id           String     @id @default(uuid())
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  medicationId String
+  timeOfDay    String // "08:00", "21:30" — store as string for simplicity
+  recurrence   String     @default("daily") // simple recurrence text for MVP
+  createdAt    DateTime   @default(now())
+
+  @@map("med_schedules")
+}
+
+model Reminder {
+  id           String     @id @default(uuid())
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  medicationId String
+  scheduledAt  DateTime
+  sent         Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@map("reminders")
+}
+
+model DoseLog {
+  id           String     @id @default(uuid())
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  medicationId String
+  profile      Profile    @relation(fields: [profileId], references: [id])
+  profileId    String
+  takenAt      DateTime   @default(now())
+  status       DoseStatus
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  @@map("dose_logs")
+}
+
+enum DoseStatus {
+  TAKEN
+  MISSED
+  SKIPPED
+}
+
+model Facility {
+  id        String   @id @default(uuid())
+  name      String
+  type      String // e.g., "pharmacy", "clinic", "hospital", "mental_health"
+  address   String?
+  city      String?
+  state     String?
+  country   String?
+  lat       Float?
+  lng       Float?
+  phone     String?
+  website   String?
+  extra     Json? // to store API payload or tags
+  createdAt DateTime @default(now())
+
+  @@map("facilities")
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  posts       Post[]
+
+  @@map("rooms")
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  room      Room      @relation(fields: [roomId], references: [id])
+  roomId    String
+  user      user      @relation(fields: [userId], references: [id])
+  userId    String
+  userAlias String
+  title     String
+  body      String
+  upvotes   Int       @default(0)
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  userAlias String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@map("comments")
+}
+
+model EmergencyContact {
+  id        String   @id @default(uuid())
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  name      String
+  phone     String?
+  email     String?
+  relation  String? // "Spouse", "Caregiver", etc.
+  createdAt DateTime @default(now())
+
+  @@map("emergency_contacts")
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
+  type      String // "SOS", "MED_REMINDER", etc.
+  message   String?
+  lat       Float?
+  lng       Float?
+  delivered Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("alerts")
+}
+
+model NotificationSetting {
+  id        String   @id @default(uuid())
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  sms       Boolean  @default(false)
+  email     Boolean  @default(true)
+  browser   Boolean  @default(true)
+  timezone  String?
+  createdAt DateTime @default(now())
+
+  @@map("notification_settings")
+}
