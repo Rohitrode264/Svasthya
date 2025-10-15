@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import axios from "axios";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Input } from "../../component/Input";
 import { Button } from "../../component/Button";
 import { Card } from "../../component/AuthCard";
@@ -27,7 +27,7 @@ export default function ResetPasswordForm() {
         setMessage(null);
 
         try {
-            const { data } = await axios.post(`${BASE_URL}/auth/password/reset`, {
+            await axios.post(`${BASE_URL}/auth/password/reset`, {
                 email,
                 code: form.code,
                 newPassword: form.newPassword,

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useDoseLogs, type DoseStatus } from "../hooks/useDoseLogs";
+import { useDoseLogs } from "../hooks/useDoseLogs";
 
 interface DoseLogsListProps {
     userId: string;

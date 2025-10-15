@@ -1,6 +1,6 @@
 import { type FC, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import { ChevronLeft, ChevronRight, Heart, Users, MessageCircle, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Clock } from "lucide-react";
 
 interface Appointment {
   id: number;
