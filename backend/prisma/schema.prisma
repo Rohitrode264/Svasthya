@@ -1,4 +1,5 @@
 // schema.prisma
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -13,6 +14,7 @@ model user {
   name                 String?
   email                String               @unique
   password             String
+  isVerified           Boolean              @default(false)
   createdAt            DateTime             @default(now())
   profiles             Profile[]
   posts                Post[]
@@ -20,6 +22,10 @@ model user {
   emergencyContacts    EmergencyContact[]
   alerts               Alert[]
   notificationSettings NotificationSetting?
+  postVotes            PostVote[]
+  verificationCodes    VerificationCode[]
+  medications          Medication[]
+  doseLogs             DoseLog[]
 
   @@map("users")
 }
@@ -31,9 +37,6 @@ model Profile {
   displayName String
   dob         DateTime?
   notes       String?
-  medications Medication[]
-  doseLogs    DoseLog[]
-  alerts      Alert[]
   createdAt   DateTime     @default(now())
 
   @@map("profiles")
@@ -41,14 +44,14 @@ model Profile {
 
 model Medication {
   id              String        @id @default(uuid())
-  profile         Profile       @relation(fields: [profileId], references: [id])
-  profileId       String
+  user            user          @relation(fields: [userId], references: [id])
+  userId          String
   name            String
   brand           String?
-  strength        String? // e.g., "500 mg"
-  quantity        Int? // current quantity
-  refillThreshold Int? // when to remind refill
-  instructions    String? // free text
+  strength        String?
+  quantity        Int?
+  refillThreshold Int?
+  instructions    String?
   createdAt       DateTime      @default(now())
   schedules       MedSchedule[]
   reminders       Reminder[]
@@ -57,12 +60,13 @@ model Medication {
   @@map("medications")
 }
 
+
 model MedSchedule {
   id           String     @id @default(uuid())
   medication   Medication @relation(fields: [medicationId], references: [id])
   medicationId String
-  timeOfDay    String // "08:00", "21:30" — store as string for simplicity
-  recurrence   String     @default("daily") // simple recurrence text for MVP
+  timeOfDay    String
+  recurrence   String     @default("daily")
   createdAt    DateTime   @default(now())
 
   @@map("med_schedules")
@@ -83,8 +87,8 @@ model DoseLog {
   id           String     @id @default(uuid())
   medication   Medication @relation(fields: [medicationId], references: [id])
   medicationId String
-  profile      Profile    @relation(fields: [profileId], references: [id])
-  profileId    String
+  user         user       @relation(fields: [userId], references: [id])
+  userId       String
   takenAt      DateTime   @default(now())
   status       DoseStatus
   note         String?
@@ -102,7 +106,7 @@ enum DoseStatus {
 model Facility {
   id        String   @id @default(uuid())
   name      String
-  type      String // e.g., "pharmacy", "clinic", "hospital", "mental_health"
+  type      String
   address   String?
   city      String?
   state     String?
@@ -111,35 +115,57 @@ model Facility {
   lng       Float?
   phone     String?
   website   String?
-  extra     Json? // to store API payload or tags
+  extra     Json?
   createdAt DateTime @default(now())
 
   @@map("facilities")
 }
 
-model Room {
-  id          String   @id @default(uuid())
-  slug        String   @unique
-  title       String
-  description String?
-  createdAt   DateTime @default(now())
-  posts       Post[]
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  official  Boolean   @default(false)
+  createdBy String?
+  createdAt DateTime  @default(now())
+  posts     PostTag[]
 
-  @@map("rooms")
+  @@map("tags")
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model PostVote {
+  id        String   @id @default(uuid())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@map("post_votes")
 }
 
 model Post {
-  id        String    @id @default(uuid())
-  room      Room      @relation(fields: [roomId], references: [id])
-  roomId    String
-  user      user      @relation(fields: [userId], references: [id])
+  id        String     @id @default(uuid())
+  user      user       @relation(fields: [userId], references: [id])
   userId    String
   userAlias String
   title     String
   body      String
-  upvotes   Int       @default(0)
-  createdAt DateTime  @default(now())
+  upvotes   Int        @default(0)
+  createdAt DateTime   @default(now())
   comments  Comment[]
+  tags      PostTag[]
+  votes     PostVote[]
 
   @@map("posts")
 }
@@ -164,7 +190,7 @@ model EmergencyContact {
   name      String
   phone     String?
   email     String?
-  relation  String? // "Spouse", "Caregiver", etc.
+  relation  String?
   createdAt DateTime @default(now())
 
   @@map("emergency_contacts")
@@ -174,9 +200,7 @@ model Alert {
   id        String   @id @default(uuid())
   user      user     @relation(fields: [userId], references: [id])
   userId    String
-  profile   Profile? @relation(fields: [profileId], references: [id])
-  profileId String?
-  type      String // "SOS", "MED_REMINDER", etc.
+  type      String
   message   String?
   lat       Float?
   lng       Float?
@@ -197,4 +221,25 @@ model NotificationSetting {
   createdAt DateTime @default(now())
 
   @@map("notification_settings")
+}
+
+enum VerificationPurpose {
+  SIGNUP
+  RESET_PASSWORD
+}
+
+model VerificationCode {
+  id        String              @id @default(uuid())
+  user      user                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  email     String
+  code      String
+  purpose   VerificationPurpose
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([email, purpose])
+  @@index([userId, purpose])
+  @@map("verification_codes")
 }

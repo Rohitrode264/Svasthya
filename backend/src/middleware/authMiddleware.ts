@@ -7,13 +7,13 @@ export default async function authMiddleware(req: Request, res: Response, next: 
   const cookieToken = req.cookies?.token;
   let token: string | undefined;
 
-  if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-    token = authHeader.split(" ")[1];
+  if (typeof authHeader === "string") {
+    token = authHeader;
   } else if (typeof cookieToken === "string") {
     token = cookieToken;
   }
 
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  if (!token) return res.status(401).json({ error: "Unauthorized", token:token });
 
   const payload = verifyJwt<{ userId: string }>(token);
   if (!payload?.userId) return res.status(401).json({ error: "Invalid token" });
