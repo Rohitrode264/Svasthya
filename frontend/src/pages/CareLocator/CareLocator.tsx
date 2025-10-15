@@ -3,7 +3,6 @@ import {
   MapPin,
   LocateFixed,
   Search,
-  Activity,
   Building2,
   Pill,
   Stethoscope,

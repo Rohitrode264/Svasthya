@@ -8,7 +8,7 @@ import { useCareCircle } from "../../hooks/useCareCircle";
 const PostPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { fetchPost, addComment, upvote } = useCareCircle();
+  const { fetchPost, addComment } = useCareCircle();
 
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);

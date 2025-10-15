@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { Menu, X, Leaf, Heart, Users, Pill, MessageCircle, ArrowRight, Check, Play, MapPin, PenLine, Calendar, Mail, ShieldCheck, Scale, Info, Bell } from 'lucide-react';
+import { useState } from 'react';
+import { Menu, X, Heart, Users, Pill, MessageCircle, ArrowRight, Check, Play, MapPin, PenLine, Calendar, ShieldCheck, Scale, Info, Bell } from 'lucide-react';
 import { Button } from '../component/Button';
 import Logo from '../component/Logo';
-import { Input } from '../component/Input';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../component/Modal';
-import { Pop } from '../component/Pop';
 
 export default function SvasthyaLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

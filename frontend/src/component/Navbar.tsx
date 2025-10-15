@@ -2,7 +2,6 @@ import { type FC } from "react";
 import {
   LayoutDashboard,
   Calendar,
-  FileText,
   User,
   LogOut,
   MapPinned,

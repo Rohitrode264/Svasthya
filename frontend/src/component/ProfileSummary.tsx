@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfileSelectors } from '../store/profileStore';
-import { User, Pill, TrendingUp } from 'lucide-react';
+import { User, Pill } from 'lucide-react';
 
 /**
  * Example component demonstrating how to use Zustand state management

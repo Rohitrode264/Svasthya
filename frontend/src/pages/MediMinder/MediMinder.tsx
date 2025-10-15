@@ -7,7 +7,6 @@ import { useMedications } from "../../hooks/useMedicine";
 import { useParams } from "react-router-dom";
 import ScheduleMedicationForm from "../../component/Forms/ScheduleMedicationForm";
 import LogDoseForm from "../../component/Forms/LogDoseForm";
-import DoseLogsList from "../../component/DoseLogsList";
 import { Calendar } from "lucide-react";
 
 export const MediMinder = () => {
