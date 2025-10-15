@@ -16,9 +16,21 @@ import contactRouter from './routes/emergencyCont.js'
 dotenv.config();
 
 const app = express();
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://svasthya.vercel.app"
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173" || "https://svasthya.vercel.app/",
-    credentials: true,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 app.use(express.json());
 
